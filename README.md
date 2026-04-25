@@ -12,7 +12,7 @@ This affects all macOS developers using **Lima**, **Colima**, and any tool backe
 | After 256MB guest alloc | 1731 MB (+22 MB) |
 | Guest freed memory | 108% recovered (more free than before, after drop_caches) |
 | Host RSS after 120s observation | 1748 MB (**+17 MB — grew, not shrank**) |
-| Host reclamation | **0%** �� monotonically non-decreasing across 120 samples |
+| Host reclamation | **0%** monotonically non-decreasing across 120 samples |
 
 **The guest did its job. The host ignored it.**
 

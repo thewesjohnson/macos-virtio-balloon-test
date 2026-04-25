@@ -1,0 +1,56 @@
+============================================================
+VIRTIO-BALLOON HOST MEMORY RECLAMATION TEST REPORT
+============================================================
+
+PURPOSE: Determine whether macOS Virtualization.framework
+returns host memory when a guest VM frees memory and the
+virtio-balloon device inflates.
+
+SYSTEM:
+  Hardware:     Apple M1 Max
+  Memory:       32GB unified
+  macOS:        26.0.1
+  Kernel:       25.0.0
+  Colima:       colima version 0.10.1
+
+TEST PARAMETERS:
+  VM config:    1GB RAM (Virtualization.framework / vz)
+  Allocation:   256MB per cycle (dd to tmpfs)
+  Observation:  120s after guest memory free
+  Cycles:       1
+
+------------------------------------------------------------
+
+CYCLE 1:
+  VM idle RSS:           1709 MB
+  After 256MB alloc:  1731 MB (+22 MB)
+  After free + 120s:    1748 MB
+  Reclaimed:             -17 MB (-78%)
+  Retained (not freed):  39 MB
+  Guest /proc/meminfo:
+    Idle:    290 MB available  (shmem: 16 MB)
+    Alloc:   70 MB available  (shmem: 273 MB)
+    Freed:   316 MB available  (shmem: 17 MB)
+    Final:   301 MB available  (shmem: 17 MB)
+    Guest recovery: 108% of idle available
+    → Guest DID free its memory. Host did NOT reclaim.
+  Observation range:     1745 - 1748 MB
+  Trend:                 MONOTONIC (never decreased)
+
+------------------------------------------------------------
+CONCLUSION:
+  Host memory reclamation: BROKEN
+  Average reclaimed: -78% across all cycles
+  The Virtualization.framework host process retains
+  allocated memory even after the guest frees it and
+  the balloon inflates. This confirms the behavior
+  reported in lima-vm/lima#2789.
+
+IMPACT:
+  On a 32GB system, this means the VM process grows
+  monotonically toward the VM memory limit (1GB) and
+  never releases it, even when the guest is idle.
+  Under sustained workloads, this forces the host into
+  swap/compression, degrading all host processes.
+
+============================================================
